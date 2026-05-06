@@ -62,35 +62,6 @@ LOCK_FILE = os.path.join(APP_DATA_DIR, "app.lock")
 os.makedirs(APP_DATA_DIR, exist_ok=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# ANSI Color Codes
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-class C:
-    RST  = "\033[0m"
-    BOLD = "\033[1m"
-    DIM  = "\033[2m"
-    # Foreground
-    RED    = "\033[91m"
-    GREEN  = "\033[92m"
-    YELLOW = "\033[93m"
-    BLUE   = "\033[94m"
-    MAGENTA= "\033[95m"
-    CYAN   = "\033[96m"
-    WHITE  = "\033[97m"
-    GRAY   = "\033[90m"
-    # Background
-    BG_RED   = "\033[41m"
-    BG_GREEN = "\033[42m"
-    BG_BLUE  = "\033[44m"
-    BG_YELLOW= "\033[43m"
-
-# Enable ANSI on Windows via kernel32
-try:
-    kernel32 = ctypes.windll.kernel32
-    kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-except Exception:
-    pass
-
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # File Logger (must be created BEFORE Console class)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 logger = logging.getLogger("DiscordAutoJoin")
@@ -102,106 +73,56 @@ _fh.setFormatter(_fmt)
 logger.addHandler(_fh)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Pretty Console Printer
+# Console Printer (Simplified)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class Console:
-    """Clean, color-coded terminal output."""
-
-    @staticmethod
-    def _ts():
-        return f"{C.GRAY}{datetime.now().strftime('%H:%M:%S')}{C.RST}"
-
-    @staticmethod
-    def _tag(label, color):
-        return f"{color}{C.BOLD} {label:^9} {C.RST}"
-
-    @staticmethod
-    def _print(msg):
-        print(msg, flush=True)
-
+    """Standard terminal output logger proxy."""
     @staticmethod
     def info(msg):
-        Console._print(f"  {Console._ts()}  {Console._tag('INFO', C.CYAN)}  {C.WHITE}{msg}{C.RST}")
+        print(f"INFO: {msg}", flush=True)
         logger.info(msg)
 
     @staticmethod
     def ok(msg):
-        Console._print(f"  {Console._ts()}  {Console._tag('  OK  ', C.GREEN)}  {C.GREEN}{msg}{C.RST}")
+        print(f"OK: {msg}", flush=True)
         logger.info(msg)
 
     @staticmethod
     def warn(msg):
-        Console._print(f"  {Console._ts()}  {Console._tag(' WARN ', C.YELLOW)}  {C.YELLOW}{msg}{C.RST}")
+        print(f"WARN: {msg}", flush=True)
         logger.warning(msg)
 
     @staticmethod
     def error(msg):
-        Console._print(f"  {Console._ts()}  {Console._tag('ERROR', C.RED)}  {C.RED}{msg}{C.RST}")
+        print(f"ERROR: {msg}", flush=True)
         logger.error(msg)
 
     @staticmethod
     def step(msg):
-        Console._print(f"  {Console._ts()}  {Console._tag(' STEP ', C.MAGENTA)}  {C.WHITE}{C.BOLD}{msg}{C.RST}")
+        print(f"STEP: {msg}", flush=True)
         logger.info(msg)
 
     @staticmethod
     def detail(msg):
-        Console._print(f"  {Console._ts()}  {Console._tag('  ··  ', C.GRAY)}  {C.GRAY}{msg}{C.RST}")
+        print(f"DETAIL: {msg}", flush=True)
         logger.debug(msg)
 
     @staticmethod
     def status(voice="--", camera="--", poll="--"):
-        v_color = C.GREEN if voice == "CONNECTED" else C.RED
-        c_color = C.GREEN if camera == "ON" else C.RED
-        line = (
-            f"  {Console._ts()}  {Console._tag('MONITOR', C.BLUE)}  "
-            f"{C.DIM}poll #{poll}{C.RST}  "
-            f"{C.DIM}voice:{C.RST} {v_color}{C.BOLD}{voice}{C.RST}  "
-            f"{C.DIM}camera:{C.RST} {c_color}{C.BOLD}{camera}{C.RST}"
-        )
-        Console._print(line)
+        print(f"MONITOR poll #{poll} voice: {voice} camera: {camera}", flush=True)
         logger.info(f"Monitor #{poll}: voice={voice}, camera={camera}")
 
     @staticmethod
     def divider(label=""):
         if label:
-            pad = 54 - len(label)
-            left = pad // 2
-            right = pad - left
-            Console._print(f"\n  {C.GRAY}{'━' * left} {C.CYAN}{C.BOLD}{label}{C.RST} {C.GRAY}{'━' * right}{C.RST}\n")
+            print(f"\n--- {label} ---", flush=True)
         else:
-            Console._print(f"  {C.GRAY}{'━' * 58}{C.RST}")
+            print("----------------------------------------------------------", flush=True)
 
 log = Console
 
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Banner
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-def print_banner():
-    print(f"""
-  {C.CYAN}{C.BOLD}╔══════════════════════════════════════════════════════════╗
-  ║                                                          ║
-  ║      ██████╗  ██╗███████╗ ██████╗ ██████╗ ██████╗ ██████╗║
-  ║      ██╔══██╗ ██║██╔════╝██╔════╝██╔═══██╗██╔══██╗██╔══██║
-  ║      ██║  ██║ ██║███████╗██║     ██║   ██║██████╔╝██║  ██║
-  ║      ██║  ██║ ██║╚════██║██║     ██║   ██║██╔══██╗██║  ██║
-  ║      ██████╔╝ ██║███████║╚██████╗╚██████╔╝██║  ██║██████╔║
-  ║      ╚═════╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝╚═╝  ╚═╝╚═════╝║
-  ║                                                          ║
-  ║           {C.WHITE}A U T O - J O I N   v 2 . 0{C.CYAN}                  ║
-  ║                  {C.GRAY}Chrome Edition{C.CYAN}                          ║
-  ╚══════════════════════════════════════════════════════════╝{C.RST}
-""")
-    print(f"  {C.DIM}┌──────────────────────────────────────────────────────┐{C.RST}")
-    print(f"  {C.DIM}│{C.RST}  {C.GRAY}Browser    {C.RST}{C.WHITE}Google Chrome (system){C.RST}                   {C.DIM}│{C.RST}")
-    print(f"  {C.DIM}│{C.RST}  {C.GRAY}Profile    {C.RST}{C.WHITE}...\\DiscordAutoJoin\\ChromeProfile{C.RST}       {C.DIM}│{C.RST}")
-    print(f"  {C.DIM}│{C.RST}  {C.GRAY}Log File   {C.RST}{C.WHITE}...\\DiscordAutoJoin\\app.log{C.RST}             {C.DIM}│{C.RST}")
-    print(f"  {C.DIM}│{C.RST}  {C.GRAY}Retries    {C.RST}{C.WHITE}{MAX_RETRIES} attempts / {RETRY_INTERVAL}s interval{C.RST}              {C.DIM}│{C.RST}")
-    print(f"  {C.DIM}│{C.RST}  {C.GRAY}Monitor    {C.RST}{C.WHITE}every {POLL_INTERVAL}s (voice + camera){C.RST}            {C.DIM}│{C.RST}")
-    print(f"  {C.DIM}└──────────────────────────────────────────────────────┘{C.RST}")
-    print()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Global State
@@ -784,8 +705,8 @@ def acquire_lock():
                 # Check if process is still running
                 os.kill(old_pid, 0)  # doesn't kill, just checks
                 # Process is alive — another instance is running
-                print(f"  {C.RED}{C.BOLD}ERROR: Another instance is already running (PID {old_pid}).{C.RST}")
-                print(f"  {C.GRAY}Delete {LOCK_FILE} if this is wrong.{C.RST}")
+                print(f"ERROR: Another instance is already running (PID {old_pid}).")
+                print(f"Delete {LOCK_FILE} if this is wrong.")
                 sys.exit(1)
             except (OSError, ValueError):
                 pass  # process is dead or file is corrupt, take over
@@ -806,7 +727,6 @@ def release_lock():
 # Entry Point
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if __name__ == "__main__":
-    print_banner()
     acquire_lock()
     log.divider("INITIALIZATION")
     log.info(f"Python {sys.version.split()[0]}")
