@@ -9,10 +9,10 @@ from playwright.async_api import async_playwright, TimeoutError as PlaywrightTim
 # Constants
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DISCORD_URL = "https://discord.com/channels/1436354443636379732/1436354444462784625"
-MAX_RETRIES = 10
-RETRY_INTERVAL = 15
-POLL_INTERVAL = 10
-PAGE_CRASH_DELAY = 20
+MAX_RETRIES = 30
+RETRY_INTERVAL = 3
+POLL_INTERVAL = 1
+PAGE_CRASH_DELAY = 5
 CHROME_ARGS = [
     '--disable-blink-features=AutomationControlled',
     '--disable-extensions',
@@ -605,7 +605,7 @@ async def automation_loop():
                         cb = page.locator('[aria-label="Turn On Camera"]')
 
                         # Status report every ~60s
-                        if poll % 6 == 0:
+                        if poll % 60 == 0:
                             mic_str = "UNMUTED" if mic_unmuted else "MUTED"
                             log.status(
                                 voice="DISCONNECTED" if jv else "CONNECTED",
