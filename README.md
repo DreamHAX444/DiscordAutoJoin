@@ -1,5 +1,12 @@
 # DiscordAutoJoin v1.0
 
+[![CI](https://github.com/DreamHAX444/DiscordAutoJoin/actions/workflows/ci.yml/badge.svg)](https://github.com/DreamHAX444/DiscordAutoJoin/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
+[![Coverage](https://img.shields.io/badge/coverage-69%25-green)](https://github.com/DreamHAX444/DiscordAutoJoin)
+[![Tests](https://img.shields.io/badge/tests-239%20passed-brightgreen)](https://github.com/DreamHAX444/DiscordAutoJoin)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)](https://github.com/DreamHAX444/DiscordAutoJoin)
+
 A powerful, persistent Windows background application that automatically joins a specific Discord voice channel, enables the camera, mutes the mic, and monitors connection health — all from a lightweight system tray icon.
 
 ## 🚀 Features
