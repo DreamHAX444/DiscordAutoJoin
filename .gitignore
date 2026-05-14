@@ -57,8 +57,10 @@ ENV/
 .vscode/
 .idea/
 
-# App Data (Local)
-DiscordAutoJoin/ChromeProfile/
-DiscordAutoJoin/app.log
-DiscordAutoJoin/app.lock
-DiscordAutoJoin/DiscordAutoJoin.vbs
+# Cache directories
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Build artifacts
+bandit-report.json

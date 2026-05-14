@@ -1,7 +1,6 @@
 # Exclude development and runtime artifacts from the source distribution and wheel
-recursive-exclude DiscordAutoJoin/venv *
-recursive-exclude DiscordAutoJoin/cache *
-recursive-exclude DiscordAutoJoin/crash_dumps *
-recursive-exclude DiscordAutoJoin/logs *
-exclude DiscordAutoJoin/*.spec
-exclude DiscordAutoJoin/build.bat
+recursive-exclude src/DiscordAutoJoin/venv *
+recursive-exclude src/DiscordAutoJoin/cache *
+recursive-exclude src/DiscordAutoJoin/crash_dumps *
+recursive-exclude src/DiscordAutoJoin/logs *
+exclude src/DiscordAutoJoin/*.spec

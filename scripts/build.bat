@@ -4,7 +4,7 @@
 :: FORCE SCRIPT DIRECTORY
 :: =========================================================
 
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 title Discord Auto Join - Runtime Builder
 color 0A
@@ -260,7 +260,7 @@ pyinstaller ^
 --hidden-import=win32gui ^
 --hidden-import=win32con ^
 --hidden-import=win32process ^
-main.py
+src\DiscordAutoJoin\main.py
 
 :: =========================================================
 :: BUILD CHECK

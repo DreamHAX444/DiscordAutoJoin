@@ -4,7 +4,6 @@ CSS optimization injection, and route interception logic.
 """
 
 import re
-import pytest
 
 from DiscordAutoJoin.resource_guard import BLOCKED_DOMAINS, OPTIMIZE_CSS
 
@@ -39,7 +38,9 @@ class TestBlockedDomainsRegex:
 
     def test_blocks_doubleclick(self):
         """Should block doubleclick URLs."""
-        assert BLOCKED_DOMAINS.search("https://securepubads.g.doubleclick.net/gampad/ads")
+        assert BLOCKED_DOMAINS.search(
+            "https://securepubads.g.doubleclick.net/gampad/ads"
+        )
         assert BLOCKED_DOMAINS.search("https://doubleclick.net/pixel")
 
     def test_blocks_newrelic(self):
@@ -53,20 +54,28 @@ class TestBlockedDomainsRegex:
 
     def test_blocks_cdn_attachments(self):
         """Should block cdn.discordapp.com/attachments URLs."""
-        assert BLOCKED_DOMAINS.search("https://cdn.discordapp.com/attachments/123/456/image.png")
+        assert BLOCKED_DOMAINS.search(
+            "https://cdn.discordapp.com/attachments/123/456/image.png"
+        )
 
     def test_blocks_media_discordapp(self):
         """Should block media.discordapp.net URLs."""
-        assert BLOCKED_DOMAINS.search("https://media.discordapp.net/attachments/123/file.jpg")
+        assert BLOCKED_DOMAINS.search(
+            "https://media.discordapp.net/attachments/123/file.jpg"
+        )
 
     def test_blocks_images_ext(self):
         """Should block images-ext URLs."""
-        assert BLOCKED_DOMAINS.search("https://images-ext-1.discordapp.net/external/abc")
+        assert BLOCKED_DOMAINS.search(
+            "https://images-ext-1.discordapp.net/external/abc"
+        )
 
     def test_allows_discord_api(self):
         """Should NOT block discord.com API URLs."""
         assert not BLOCKED_DOMAINS.search("https://discord.com/api/v9/gateway")
-        assert not BLOCKED_DOMAINS.search("https://discord.com/api/v9/channels/123/messages")
+        assert not BLOCKED_DOMAINS.search(
+            "https://discord.com/api/v9/channels/123/messages"
+        )
 
     def test_allows_discord_gateway(self):
         """Should NOT block Discord gateway/websocket URLs."""
@@ -76,7 +85,9 @@ class TestBlockedDomainsRegex:
     def test_allows_cdn_non_attachments(self):
         """Should NOT block cdn.discordapp.com non-attachment URLs."""
         # Only /attachments path is blocked, not other CDN paths
-        assert not BLOCKED_DOMAINS.search("https://cdn.discordapp.com/icons/123/icon.png")
+        assert not BLOCKED_DOMAINS.search(
+            "https://cdn.discordapp.com/icons/123/icon.png"
+        )
         assert not BLOCKED_DOMAINS.search("https://cdn.discordapp.com/emojis/456.png")
 
     def test_allows_blank_url(self):

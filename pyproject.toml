@@ -50,8 +50,12 @@ Homepage = "https://github.com/DreamHAX444/DiscordAutoJoin"
 Repository = "https://github.com/DreamHAX444/DiscordAutoJoin"
 Issues = "https://github.com/DreamHAX444/DiscordAutoJoin/issues"
 
+[tool.setuptools.package-dir]
+"" = "src"
+
 [tool.setuptools.packages.find]
-include = ["DiscordAutoJoin"]
+where = ["src"]
+include = ["DiscordAutoJoin*"]
 exclude = ["DiscordAutoJoin.venv*", "DiscordAutoJoin.cache*", "DiscordAutoJoin.crash_dumps*", "DiscordAutoJoin.logs*"]
 
 [tool.setuptools.package-data]
@@ -67,7 +71,7 @@ addopts = [
     "-v",
     "--strict-markers",
     "--tb=short",
-    "--cov=DiscordAutoJoin",
+    "--cov=src/DiscordAutoJoin",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-fail-under=60",
@@ -94,3 +98,34 @@ exclude_lines = [
     "raise NotImplementedError",
     "if TYPE_CHECKING:",
 ]
+
+[tool.mypy]
+python_version = "3.10"
+strict = false
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_no_return = true
+show_error_codes = true
+exclude = [
+    "DiscordAutoJoin/venv/",
+    "DiscordAutoJoin/cache/",
+    "DiscordAutoJoin/crash_dumps/",
+    "DiscordAutoJoin/logs/",
+    "tests/",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "playwright.*",
+    "pystray.*",
+    "PIL.*",
+    "psutil.*",
+]
+ignore_missing_imports = true

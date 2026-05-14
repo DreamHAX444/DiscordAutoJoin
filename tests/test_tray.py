@@ -3,19 +3,21 @@ Unit tests for DiscordAutoJoin.tray — icon generation, menu generator,
 tray callbacks, set_tray(), update_last_action(), and register_startup().
 """
 
-import os
-import sys
-import time
-import pytest
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch, PropertyMock
+from datetime import datetime
+from unittest.mock import MagicMock, patch
 
 from DiscordAutoJoin.tray import (
-    _get_icon, _menu_generator, set_tray, update_last_action,
-    _on_login_done, _toggle_pause, _trigger_reconnect,
-    _restart_app, _exit_app, register_startup,
+    _get_icon,
+    _menu_generator,
+    set_tray,
+    update_last_action,
+    _on_login_done,
+    _toggle_pause,
+    _trigger_reconnect,
+    _restart_app,
+    _exit_app,
+    register_startup,
 )
-from DiscordAutoJoin.state import state
 
 
 class TestGetIcon:
@@ -24,6 +26,7 @@ class TestGetIcon:
     def test_returns_pil_image(self):
         """Should return a PIL Image."""
         from PIL import Image
+
         icon = _get_icon("green")
         assert isinstance(icon, Image.Image)
 
@@ -51,7 +54,7 @@ class TestGetIcon:
 
     def test_supports_named_colors(self):
         """Should support named colors like 'green', 'yellow', 'blue'."""
-        for color in ['green', 'yellow', 'blue', 'darkred', 'gray']:
+        for color in ["green", "yellow", "blue", "darkred", "gray"]:
             icon = _get_icon(color)
             assert icon is not None
 
@@ -73,6 +76,7 @@ class TestMenuGenerator:
     def test_yields_menu_items(self, reset_state):
         """Should yield pystray.MenuItem objects."""
         import pystray
+
         items = list(_menu_generator())
         assert len(items) > 0
         for item in items:
@@ -106,7 +110,9 @@ class TestMenuGenerator:
     def test_contains_pause_toggle(self, reset_state):
         """Menu should contain a pause/resume toggle item."""
         items = list(_menu_generator())
-        pause_items = [i for i in items if "Pause" in str(i.text) or "Resume" in str(i.text)]
+        pause_items = [
+            i for i in items if "Pause" in str(i.text) or "Resume" in str(i.text)
+        ]
         assert len(pause_items) >= 1
 
     def test_contains_force_reconnect(self, reset_state):
@@ -206,12 +212,14 @@ class TestSetTray:
     def test_no_error_when_icon_is_none(self, reset_state):
         """Should not raise when tray icon is not set."""
         import DiscordAutoJoin.tray as tray_mod
+
         tray_mod.icon = None
         set_tray("Connected", "green")  # Should not raise
 
     def test_sets_icon_color(self, reset_state):
         """Should set icon color on the tray icon object."""
         import DiscordAutoJoin.tray as tray_mod
+
         mock_icon = MagicMock()
         tray_mod.icon = mock_icon
 
@@ -224,6 +232,7 @@ class TestSetTray:
     def test_sets_tooltip(self, reset_state):
         """Should set the tray tooltip text."""
         import DiscordAutoJoin.tray as tray_mod
+
         mock_icon = MagicMock()
         tray_mod.icon = mock_icon
 
@@ -235,6 +244,7 @@ class TestSetTray:
     def test_paused_overrides_to_gray(self, reset_state):
         """When paused, icon should be gray regardless of color arg."""
         import DiscordAutoJoin.tray as tray_mod
+
         mock_icon = MagicMock()
         tray_mod.icon = mock_icon
         reset_state.paused = True
@@ -264,6 +274,7 @@ class TestUpdateLastAction:
     def test_no_error_when_icon_is_none(self, reset_state):
         """Should not raise when tray icon is not set."""
         import DiscordAutoJoin.tray as tray_mod
+
         tray_mod.icon = None
         update_last_action("Test action")  # Should not raise
 
@@ -331,21 +342,21 @@ class TestRegisterStartup:
 
     def test_handles_registry_error_gracefully(self):
         """Should log a warning but not raise on registry errors."""
-        with patch('winreg.OpenKey', side_effect=PermissionError("Access denied")):
+        with patch("winreg.OpenKey", side_effect=PermissionError("Access denied")):
             # Should not raise
             register_startup()
 
     def test_handles_generic_error_gracefully(self):
         """Should handle any exception during registry access."""
-        with patch('winreg.OpenKey', side_effect=RuntimeError("Unexpected")):
+        with patch("winreg.OpenKey", side_effect=RuntimeError("Unexpected")):
             register_startup()  # Should not raise
 
     def test_uses_frozen_path_when_frozen(self):
         """When sys.frozen is True, should use only executable path."""
-        with patch('sys.frozen', True, create=True):
-            with patch('winreg.OpenKey') as mock_open:
-                with patch('winreg.SetValueEx'):
-                    with patch('winreg.CloseKey'):
+        with patch("sys.frozen", True, create=True):
+            with patch("winreg.OpenKey") as mock_open:
+                with patch("winreg.SetValueEx"):
+                    with patch("winreg.CloseKey"):
                         register_startup()
                         # Verify it was called (didn't crash)
                         mock_open.assert_called_once()

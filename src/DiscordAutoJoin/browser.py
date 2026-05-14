@@ -5,13 +5,21 @@ priority adjustment, and HWND discovery.
 All Chrome process operations use psutil (no PowerShell/WMIC).
 """
 
+# pyright: reportAttributeAccessIssue=false
+
+from __future__ import annotations
+
 import os
 import ctypes
 import time
 import asyncio
 import shutil
 import logging
+from typing import Generator, Optional, Any, TYPE_CHECKING
 import psutil
+
+if TYPE_CHECKING:
+    from .state import AppState
 
 from .config import CHROME_PROFILE_DIR
 from .logging_setup import log
@@ -21,7 +29,10 @@ logger = logging.getLogger("DiscordAutoJoin")
 
 # ── Chrome Process Utilities ──────────────────────────────────────────────────
 
-def _get_chrome_procs(profile_name=None):
+
+def _get_chrome_procs(
+    profile_name: Optional[str] = None,
+) -> Generator[psutil.Process, None, None]:
     """Yield psutil.Process objects for all running Chrome instances.
 
     Args:
@@ -32,11 +43,11 @@ def _get_chrome_procs(profile_name=None):
         psutil.Process: Matching Chrome process objects.
     """
     try:
-        for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'memory_info']):
+        for proc in psutil.process_iter(["pid", "name", "cmdline", "memory_info"]):
             try:
-                if proc.info['name'] and 'chrome' in proc.info['name'].lower():
+                if proc.info["name"] and "chrome" in proc.info["name"].lower():
                     if profile_name:
-                        cmdline = ' '.join(proc.info['cmdline'] or [])
+                        cmdline = " ".join(proc.info["cmdline"] or [])
                         if profile_name not in cmdline:
                             continue
                     yield proc
@@ -46,7 +57,7 @@ def _get_chrome_procs(profile_name=None):
         logger.debug(f"_get_chrome_procs enumeration error: {e}")
 
 
-async def kill_stale_chrome():
+async def kill_stale_chrome() -> None:
     """Terminate all Chrome processes tied to this app's profile directory.
 
     Uses psutil instead of PowerShell/WMIC for cross-compatibility.
@@ -54,20 +65,23 @@ async def kill_stale_chrome():
     Logs PIDs of killed processes for debugging.
     """
     prof_name = os.path.basename(CHROME_PROFILE_DIR)
-    killed_pids = []
+    killed_pids: list[int] = []
     start_time = time.monotonic()
 
     for proc in _get_chrome_procs(profile_name=prof_name):
         try:
-            pid = proc.info['pid']
+            pid = proc.info["pid"]
             proc.kill()
             killed_pids.append(pid)
         except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
             logger.debug(f"kill_stale_chrome: cannot kill PID {proc.info['pid']}: {e}")
 
     if killed_pids:
-        log.info(f"Terminated {len(killed_pids)} stale Chrome process(es): PIDs={killed_pids}",
-                 category="SYS", silent=True)
+        log.info(
+            f"Terminated {len(killed_pids)} stale Chrome process(es): PIDs={killed_pids}",
+            category="SYS",
+            silent=True,
+        )
 
     # Wait for processes to actually terminate (async-friendly polling)
     deadline = time.monotonic() + 5
@@ -81,14 +95,20 @@ async def kill_stale_chrome():
     logger.debug(f"kill_stale_chrome completed in {elapsed:.2f}s")
 
 
-def remove_chrome_locks():
+def remove_chrome_locks() -> None:
     """Remove Chrome singleton lock files and Crashpad metadata from the profile directory.
 
     These files can prevent Chrome from launching if a previous instance
     crashed or was force-killed. Safe to call before every launch.
     """
-    locks = ["SingletonLock", "SingletonCookie", "SingletonSocket", "lockfile", ".parentlock"]
-    removed = []
+    locks = [
+        "SingletonLock",
+        "SingletonCookie",
+        "SingletonSocket",
+        "lockfile",
+        ".parentlock",
+    ]
+    removed: list[str] = []
     for fname in locks:
         path = os.path.join(CHROME_PROFILE_DIR, fname)
         try:
@@ -110,42 +130,53 @@ def remove_chrome_locks():
         logger.debug(f"Removed Chrome lock artifacts: {removed}")
 
 
-def lower_chrome_priority():
+def lower_chrome_priority() -> dict[str, Any]:
     """Set all Chrome processes to below-normal priority using psutil.
 
     Returns a dict with statistics for logging:
-        {'count': N, 'total_memory_mb': M, 'pids': [...]}
+        {'count': N, 'total_memory_mb': M, 'pids': [...], 'elapsed': seconds}
 
     Replaces the deprecated 'wmic' approach from Phase 1.
     """
     count = 0
     total_memory_mb = 0.0
-    pids = []
+    pids: list[int] = []
     start_time = time.monotonic()
 
     for proc in _get_chrome_procs():
         try:
-            pid = proc.info['pid']
+            pid = proc.info["pid"]
             proc.nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)
             count += 1
             pids.append(pid)
-            if proc.info['memory_info']:
-                total_memory_mb += proc.info['memory_info'].rss / (1024 * 1024)
+            if proc.info["memory_info"]:
+                total_memory_mb += proc.info["memory_info"].rss / (1024 * 1024)
         except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-            logger.debug(f"lower_chrome_priority: cannot adjust PID {proc.info['pid']}: {e}")
+            logger.debug(
+                f"lower_chrome_priority: cannot adjust PID {proc.info['pid']}: {e}"
+            )
 
     elapsed = time.monotonic() - start_time
     if count > 0:
-        log.info(f"Chrome priority lowered: {count} proc(s) | Memory: {total_memory_mb:.1f} MB | "
-                 f"PIDs={pids} | took {elapsed:.2f}s",
-                 category="SYS", silent=True)
+        log.info(
+            f"Chrome priority lowered: {count} proc(s) | Memory: {total_memory_mb:.1f} MB | "
+            f"PIDs={pids} | took {elapsed:.2f}s",
+            category="SYS",
+            silent=True,
+        )
 
-    return {'count': count, 'total_memory_mb': total_memory_mb, 'pids': pids, 'elapsed': elapsed}
+    return {
+        "count": count,
+        "total_memory_mb": total_memory_mb,
+        "pids": pids,
+        "elapsed": elapsed,
+    }
 
 
 # ── Window Handle Discovery ───────────────────────────────────────────────────
 
-def find_chrome_hwnd(state):
+
+def find_chrome_hwnd(state: "AppState") -> None:
     """Locate the Chrome window HWND by enumerating visible windows.
 
     Searches for a visible window whose title contains 'discord'
@@ -154,10 +185,10 @@ def find_chrome_hwnd(state):
     Args:
         state: AppState instance (browser_hwnd will be set on it).
     """
-    hwnds = []
+    hwnds: list[int] = []
     buf = ctypes.create_unicode_buffer(260)
 
-    def cb(hwnd, _):
+    def cb(hwnd: int, _: Any) -> bool:
         if ctypes.windll.user32.IsWindowVisible(hwnd):
             n = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
             if 0 < n < 260:

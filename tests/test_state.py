@@ -3,9 +3,7 @@ Unit tests for DiscordAutoJoin.state — thread-safe AppState with RLock-protect
 properties, threading.Event behavior, and concurrent access patterns.
 """
 
-import time
 import threading
-import pytest
 
 from DiscordAutoJoin.state import AppState, state
 
@@ -114,6 +112,7 @@ class TestAppStateProperties:
     def test_action_timestamp_get_set(self, reset_state):
         """action_timestamp property should get and set correctly."""
         from datetime import datetime
+
         ts = datetime.now()
         reset_state.action_timestamp = ts
         assert reset_state.action_timestamp == ts
@@ -147,6 +146,7 @@ class TestAppStateThreadSafety:
 
     def test_concurrent_writes(self, reset_state):
         """Multiple threads writing restart_count should not corrupt state."""
+
         def writer(start, count):
             for i in range(start, start + count):
                 reset_state.restart_count = i
@@ -234,4 +234,5 @@ class TestSingletonState:
     def test_singleton_same_instance(self):
         """Importing state twice should return the same instance."""
         from DiscordAutoJoin.state import state as state2
+
         assert state is state2

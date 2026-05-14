@@ -4,12 +4,8 @@ DEBUG_MODE flag, and logger configuration.
 """
 
 import logging
-import pytest
-from unittest.mock import patch, MagicMock
 
-from DiscordAutoJoin.logging_setup import (
-    logger, CategoryFilter, Console, DEBUG_MODE, log
-)
+from DiscordAutoJoin.logging_setup import logger, CategoryFilter, Console, log
 
 
 class TestCategoryFilter:
@@ -19,21 +15,31 @@ class TestCategoryFilter:
         """Should inject 'SYS' category when record has no category."""
         filt = CategoryFilter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="test", args=(), exc_info=None
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="test",
+            args=(),
+            exc_info=None,
         )
         # Record should not have category initially
-        assert not hasattr(record, 'category')
+        assert not hasattr(record, "category")
         result = filt.filter(record)
         assert result is True
-        assert record.category == 'SYS'
+        assert record.category == "SYS"
 
     def test_preserves_existing_category(self):
         """Should not overwrite an existing category attribute."""
         filt = CategoryFilter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="test", args=(), exc_info=None
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="test",
+            args=(),
+            exc_info=None,
         )
         record.category = "NET"
         result = filt.filter(record)
@@ -44,8 +50,13 @@ class TestCategoryFilter:
         """filter() should always return True (never suppress records)."""
         filt = CategoryFilter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="test", args=(), exc_info=None
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="test",
+            args=(),
+            exc_info=None,
         )
         assert filt.filter(record) is True
 
@@ -59,22 +70,22 @@ class TestConsole:
 
     def test_info_method_exists(self):
         """Console should have an info() static method."""
-        assert hasattr(Console, 'info')
+        assert hasattr(Console, "info")
         assert callable(Console.info)
 
     def test_ok_method_exists(self):
         """Console should have an ok() static method."""
-        assert hasattr(Console, 'ok')
+        assert hasattr(Console, "ok")
         assert callable(Console.ok)
 
     def test_warn_method_exists(self):
         """Console should have a warn() static method."""
-        assert hasattr(Console, 'warn')
+        assert hasattr(Console, "warn")
         assert callable(Console.warn)
 
     def test_error_method_exists(self):
         """Console should have an error() static method."""
-        assert hasattr(Console, 'error')
+        assert hasattr(Console, "error")
         assert callable(Console.error)
 
     def test_info_prints_to_console(self, capsys):
@@ -93,6 +104,7 @@ class TestConsole:
     def test_info_prints_in_debug_mode(self, capsys):
         """Console.info() should print even when silent if DEBUG_MODE is True."""
         import DiscordAutoJoin.logging_setup as ls
+
         original = ls.DEBUG_MODE
         ls.DEBUG_MODE = True
         try:
@@ -153,9 +165,7 @@ class TestLogger:
 
     def test_logger_has_category_filter(self):
         """Logger should have at least one CategoryFilter attached."""
-        has_cat_filter = any(
-            isinstance(f, CategoryFilter) for f in logger.filters
-        )
+        has_cat_filter = any(isinstance(f, CategoryFilter) for f in logger.filters)
         assert has_cat_filter
 
     def test_logger_level_is_debug(self):
@@ -173,11 +183,13 @@ class TestDebugMode:
     def test_debug_mode_default_false(self):
         """DEBUG_MODE should default to False."""
         import DiscordAutoJoin.logging_setup as ls
+
         assert ls.DEBUG_MODE is False
 
     def test_debug_mode_can_be_set(self):
         """DEBUG_MODE should be settable."""
         import DiscordAutoJoin.logging_setup as ls
+
         original = ls.DEBUG_MODE
         try:
             ls.DEBUG_MODE = True

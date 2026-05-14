@@ -3,15 +3,21 @@ Discord-specific actions: JavaScript snippets for monitoring and control,
 plus the safe_eval wrapper for executing JS in the page.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
-from playwright.async_api import TimeoutError as PlaywrightTimeoutError, Error as PlaywrightError
+from typing import Any, Optional, TYPE_CHECKING
+from playwright.async_api import Error as PlaywrightError
+
+if TYPE_CHECKING:
+    from playwright.async_api import Page
 
 logger = logging.getLogger("DiscordAutoJoin")
 
 # ── JavaScript Snippets ───────────────────────────────────────────────────────
 
-MONITOR_JS = '''() => {
+MONITOR_JS: str = """() => {
     const joinXPath = "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'join voice')]";
     const joinBtn = document.evaluate(joinXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
     const joinVisible = joinBtn && joinBtn.offsetWidth > 0;
@@ -28,17 +34,18 @@ MONITOR_JS = '''() => {
             : isMute;
     }
     return { joinVisible, camOff, micUnmuted };
-}'''
+}"""
 
-CLICK_MIC_JS = '''() => {
+CLICK_MIC_JS: str = """() => {
     const micBtn = document.querySelector('button[aria-label*="ute" i], button[aria-label*="icrophone" i], button[aria-label*="Turn off" i]');
     if (micBtn) micBtn.click();
-}'''
+}"""
 
 
 # ── Safe JS Evaluation ────────────────────────────────────────────────────────
 
-async def safe_eval(page, js, timeout=10):
+
+async def safe_eval(page: "Page", js: str, timeout: int = 10) -> Optional[Any]:
     """Evaluate JavaScript in the page with timeout and error handling.
 
     Args:
@@ -57,7 +64,9 @@ async def safe_eval(page, js, timeout=10):
     try:
         return await asyncio.wait_for(page.evaluate(js), timeout=timeout)
     except PlaywrightError as e:
-        if "Target page, context or browser has been closed" in str(e) or "Browser closed" in str(e):
+        if "Target page, context or browser has been closed" in str(
+            e
+        ) or "Browser closed" in str(e):
             raise e
         logger.debug(f"safe_eval PlaywrightError: {e}")
         return None

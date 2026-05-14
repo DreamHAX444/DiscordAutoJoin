@@ -195,14 +195,66 @@ The version is defined in [`main.py`](DiscordAutoJoin/main.py) as `VERSION = "1.
 - **MINOR**: New features, new modules
 - **PATCH**: Bug fixes, performance improvements, doc updates
 
+## 🚀 Release Process
+
+This section documents the step-by-step process for publishing a new release to PyPI.
+
+### Prerequisites
+
+- Push access to the [GitHub repository](https://github.com/DreamHAX444/DiscordAutoJoin)
+- PyPI API token with upload permissions for the `DiscordAutoJoin` project
+- `.pypirc` configured or `TWINE_USERNAME`/`TWINE_PASSWORD` environment variables set
+
+### Release Checklist
+
+1. **Update version** — Bump `VERSION` in [`DiscordAutoJoin/main.py`](DiscordAutoJoin/main.py) following semver
+2. **Update changelog** — Add a new `## [X.Y.Z]` section in [`CHANGELOG.md`](CHANGELOG.md)
+3. **Run full test suite** — `pytest` must pass with coverage ≥ 60%
+4. **Run linting** — `ruff check DiscordAutoJoin/ tests/` and `ruff format --check DiscordAutoJoin/ tests/`
+5. **Build wheel** — `python -m build --wheel`
+6. **Check wheel** — `twine check dist/*.whl`
+7. **Smoke test** — Run [`scripts/smoke_test.ps1`](scripts/smoke_test.ps1) to verify install from PyPI works
+8. **Commit & tag**:
+   ```bash
+   git add -A
+   git commit -m "vX.Y.Z: <brief description>"
+   git tag -a vX.Y.Z -m "vX.Y.Z: <brief description>"
+   git push origin main
+   git push origin vX.Y.Z
+   ```
+9. **CI/CD publishes to PyPI** — The GitHub Actions [`publish`](.github/workflows/ci.yml) job triggers automatically on the tag push, verifies the tag matches the package version, builds the wheel, and publishes to PyPI via trusted publishing
+10. **Create GitHub Release** — Go to [GitHub Releases](https://github.com/DreamHAX444/DiscordAutoJoin/releases/new), select the tag, attach the wheel, and paste the changelog entry
+11. **Verify** — `pip install discordautojoin` from a clean environment and run `discord-autojoin --version`
+
+### Automated Publishing
+
+The CI/CD pipeline (`.github/workflows/ci.yml`) includes a `publish` job that:
+- Triggers only on `v*` tag pushes (e.g., `v1.0.0`, `v2.0.0`)
+- Runs after `lint`, `test`, and `build` jobs all pass
+- Verifies the Git tag matches `VERSION` in `main.py`
+- Builds a clean wheel and checks it with `twine check`
+- Publishes to PyPI using the official [`pypa/gh-action-pypi-publish`](https://github.com/pypa/gh-action-pypi-publish) action
+
+### Pre-commit Hooks
+
+This project uses [pre-commit](https://pre-commit.com/) to enforce code quality before commits:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+The hooks (configured in [`.pre-commit-config.yaml`](.pre-commit-config.yaml)) run `ruff` for linting and formatting on all staged Python files.
+
 ## 📋 Roadmap
 
-See [`plans/roadmap.md`](plans/roadmap.md) for the full 7-phase transformation plan:
+See [`plans/roadmap.md`](plans/roadmap.md) for the full transformation plan:
 
 - ✅ Phase 1: Security Hardening
 - ✅ Phase 2: Performance Optimization & Code Cleanup
 - ✅ Phase 3: Architectural Redesign (12 modules)
 - ✅ Phase 4: Final Integration, Testing & Documentation
-- ⬜ Phase 5: Build & Deployment (PyInstaller bundling)
-- ⬜ Phase 6: Maintainability (type hints, expanded tests)
-- ⬜ Phase 7: Observability (health metrics, diagnostics export)
+- ✅ Phase 5: Finalization & Hardening
+- ✅ Phase 6: Distribution & Release Readiness
+- ✅ Phase 7: Release Pipeline & Distribution
+- ✅ Phase 8: Post-Release Hardening & Automation

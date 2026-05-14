@@ -5,7 +5,6 @@ missing keys, corrupt files, and environment variable handling.
 
 import os
 import json
-import pytest
 
 import DiscordAutoJoin.config as cfg
 
@@ -16,9 +15,14 @@ class TestDefaultConfig:
     def test_default_config_has_required_keys(self):
         """DEFAULT_CONFIG must contain all expected keys."""
         required = [
-            "DISCORD_URL", "MAX_JOIN_RETRIES", "POLL_INTERVAL",
-            "RESTART_DELAY", "HEALTH_LOG_EVERY", "MAX_CONSECUTIVE_ERRS",
-            "MAX_RELOAD_FAILS", "MAX_LAUNCH_RETRIES",
+            "DISCORD_URL",
+            "MAX_JOIN_RETRIES",
+            "POLL_INTERVAL",
+            "RESTART_DELAY",
+            "HEALTH_LOG_EVERY",
+            "MAX_CONSECUTIVE_ERRS",
+            "MAX_RELOAD_FAILS",
+            "MAX_LAUNCH_RETRIES",
         ]
         for key in required:
             assert key in cfg.DEFAULT_CONFIG, f"Missing key: {key}"
@@ -47,7 +51,7 @@ class TestLoadConfig:
 
     def test_loads_existing_config(self, temp_appdata, sample_config_dict):
         """load_config() reads an existing config file correctly."""
-        with open(cfg.CONFIG_FILE, 'w', encoding='utf-8') as f:
+        with open(cfg.CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(sample_config_dict, f)
         result = cfg.load_config()
         assert result["DISCORD_URL"] == sample_config_dict["DISCORD_URL"]
@@ -56,7 +60,7 @@ class TestLoadConfig:
     def test_merges_missing_keys_from_defaults(self, temp_appdata):
         """Missing keys in saved config are filled from DEFAULT_CONFIG."""
         partial = {"DISCORD_URL": "https://custom.url/channels/1/2"}
-        with open(cfg.CONFIG_FILE, 'w', encoding='utf-8') as f:
+        with open(cfg.CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(partial, f)
         result = cfg.load_config()
         # Custom value preserved
@@ -67,14 +71,14 @@ class TestLoadConfig:
 
     def test_corrupt_json_falls_back_to_defaults(self, temp_appdata):
         """Corrupt JSON file should fall back to DEFAULT_CONFIG."""
-        with open(cfg.CONFIG_FILE, 'w', encoding='utf-8') as f:
+        with open(cfg.CONFIG_FILE, "w", encoding="utf-8") as f:
             f.write("this is not valid json {{{")
         result = cfg.load_config()
         assert result == cfg.DEFAULT_CONFIG
 
     def test_empty_file_falls_back_to_defaults(self, temp_appdata):
         """Empty config file should fall back to DEFAULT_CONFIG."""
-        with open(cfg.CONFIG_FILE, 'w', encoding='utf-8') as f:
+        with open(cfg.CONFIG_FILE, "w", encoding="utf-8") as f:
             f.write("")
         result = cfg.load_config()
         assert result == cfg.DEFAULT_CONFIG
@@ -82,7 +86,7 @@ class TestLoadConfig:
     def test_utf8_encoding_supported(self, temp_appdata):
         """Config with UTF-8 characters should load correctly."""
         data = {"DISCORD_URL": "https://discord.com/channels/123/456"}
-        with open(cfg.CONFIG_FILE, 'w', encoding='utf-8') as f:
+        with open(cfg.CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
         result = cfg.load_config()
         assert result["DISCORD_URL"] == data["DISCORD_URL"]
@@ -90,7 +94,7 @@ class TestLoadConfig:
     def test_extra_keys_preserved(self, temp_appdata):
         """User-added keys not in DEFAULT_CONFIG should be preserved."""
         data = {"DISCORD_URL": "https://x.com", "CUSTOM_KEY": "custom_value"}
-        with open(cfg.CONFIG_FILE, 'w', encoding='utf-8') as f:
+        with open(cfg.CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f)
         result = cfg.load_config()
         assert result["CUSTOM_KEY"] == "custom_value"

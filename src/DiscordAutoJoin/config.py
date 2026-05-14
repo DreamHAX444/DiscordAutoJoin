@@ -8,22 +8,25 @@ Handles:
   automatic merging of missing keys from defaults.
 """
 
+from __future__ import annotations
+
 import os
 import json
 import logging
+from typing import Any
 
 logger = logging.getLogger("DiscordAutoJoin")
 
 # ── Path Constants ────────────────────────────────────────────────────────────
-APP_DATA_DIR = os.path.join(os.environ["APPDATA"], "DiscordAutoJoin")
-CHROME_PROFILE_DIR = os.path.join(APP_DATA_DIR, "ChromeProfile")
-LOG_FILE = os.path.join(APP_DATA_DIR, "app.log")
-LOCK_FILE = os.path.join(APP_DATA_DIR, "app.lock")
-CONFIG_FILE = os.path.join(APP_DATA_DIR, "config.json")
+APP_DATA_DIR: str = os.path.join(os.environ["APPDATA"], "DiscordAutoJoin")
+CHROME_PROFILE_DIR: str = os.path.join(APP_DATA_DIR, "ChromeProfile")
+LOG_FILE: str = os.path.join(APP_DATA_DIR, "app.log")
+LOCK_FILE: str = os.path.join(APP_DATA_DIR, "app.lock")
+CONFIG_FILE: str = os.path.join(APP_DATA_DIR, "config.json")
 os.makedirs(APP_DATA_DIR, exist_ok=True)
 
 # ── Default Configuration ─────────────────────────────────────────────────────
-DEFAULT_CONFIG = {
+DEFAULT_CONFIG: dict[str, Any] = {
     "DISCORD_URL": "https://discord.com/channels/1436354443636379732/1436354444462784625",
     "MAX_JOIN_RETRIES": 30,
     "POLL_INTERVAL": 5.0,
@@ -35,7 +38,7 @@ DEFAULT_CONFIG = {
 }
 
 
-def load_config():
+def load_config() -> dict[str, Any]:
     """Load configuration from disk with UTF-8 encoding, merging with defaults.
 
     On first run, creates the config file with DEFAULT_CONFIG values.
@@ -47,18 +50,20 @@ def load_config():
         dict: Merged configuration dictionary. Falls back to DEFAULT_CONFIG on any error.
     """
     if not os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(DEFAULT_CONFIG, f, indent=4, ensure_ascii=False)
         return dict(DEFAULT_CONFIG)
     try:
-        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-            loaded = json.load(f)
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            loaded: dict[str, Any] = json.load(f)
         # Validate required fields — warn if any defaults are missing from saved config
         missing = [k for k in DEFAULT_CONFIG if k not in loaded]
         if missing:
-            logger.warning(f"Config file missing keys: {missing}. Filling from defaults.")
+            logger.warning(
+                f"Config file missing keys: {missing}. Filling from defaults."
+            )
         merged = {**DEFAULT_CONFIG, **loaded}
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as out:
+        with open(CONFIG_FILE, "w", encoding="utf-8") as out:
             json.dump(merged, out, indent=4, ensure_ascii=False)
         return merged
     except (json.JSONDecodeError, IOError) as e:
@@ -67,4 +72,4 @@ def load_config():
 
 
 # Module-level config instance — loaded once at import time
-CONFIG = load_config()
+CONFIG: dict[str, Any] = load_config()

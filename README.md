@@ -1,6 +1,8 @@
 # DiscordAutoJoin v1.0
 
 [![CI](https://github.com/DreamHAX444/DiscordAutoJoin/actions/workflows/ci.yml/badge.svg)](https://github.com/DreamHAX444/DiscordAutoJoin/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/DiscordAutoJoin?label=pypi)](https://pypi.org/project/DiscordAutoJoin/)
+[![Downloads](https://img.shields.io/pypi/dm/DiscordAutoJoin)](https://pypi.org/project/DiscordAutoJoin/)
 [![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
 [![Coverage](https://img.shields.io/badge/coverage-69%25-green)](https://github.com/DreamHAX444/DiscordAutoJoin)
 [![Tests](https://img.shields.io/badge/tests-239%20passed-brightgreen)](https://github.com/DreamHAX444/DiscordAutoJoin)
@@ -61,13 +63,24 @@ main.py  ──►  __init__.py  ──►  automation.py  ──►  browser.py
 
 ## 📦 Installation
 
+### Quick Install (PyPI)
+
+```bash
+pip install discordautojoin
+playwright install chromium
+discord-autojoin
+```
+
+[![PyPI](https://img.shields.io/pypi/v/DiscordAutoJoin?label=pypi)](https://pypi.org/project/DiscordAutoJoin/)
+[![Downloads](https://img.shields.io/pypi/dm/DiscordAutoJoin)](https://pypi.org/project/DiscordAutoJoin/)
+
 ### Prerequisites
 
 - Windows 10/11
 - Python 3.9 or later
 - Google Chrome installed
 
-### Setup
+### From Source
 
 ```bash
 # Clone the repository

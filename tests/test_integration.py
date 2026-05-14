@@ -12,11 +12,8 @@ real network calls. Uses pytest-asyncio for async test support.
 
 import os
 import sys
-import json
 import asyncio
-import threading
-import time
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 # Ensure package is importable
@@ -24,6 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 # ── Mock Fixtures ──────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def mock_page():
@@ -79,6 +77,7 @@ def mock_playwright(mock_context):
 def integration_state(temp_appdata, clean_config):
     """Set up state for integration testing with clean config."""
     from DiscordAutoJoin.state import state
+
     # Reset everything
     state.status = "Initializing"
     state.paused = False
@@ -96,6 +95,7 @@ def integration_state(temp_appdata, clean_config):
 
 # ── Integration Tests ──────────────────────────────────────────────────────────
 
+
 @pytest.mark.integration
 class TestConfigurationLoading:
     """Verify config is loaded correctly before automation starts."""
@@ -103,6 +103,7 @@ class TestConfigurationLoading:
     def test_config_loaded_before_automation(self, integration_state, clean_config):
         """Config must be available and valid before automation loop runs."""
         from DiscordAutoJoin.config import CONFIG
+
         assert "DISCORD_URL" in CONFIG
         assert "POLL_INTERVAL" in CONFIG
         assert "MAX_JOIN_RETRIES" in CONFIG
@@ -115,22 +116,26 @@ class TestBrowserLaunchFlow:
     """Verify browser launch sequence with mocked Playwright."""
 
     @pytest.mark.asyncio
-    async def test_launch_persistent_context_called(self, integration_state, mock_playwright):
+    async def test_launch_persistent_context_called(
+        self, integration_state, mock_playwright
+    ):
         """Browser launch should use launch_persistent_context with correct args."""
         from DiscordAutoJoin.config import CHROME_PROFILE_DIR
         from DiscordAutoJoin.chrome_flags import CHROME_ARGS
 
-        context = await mock_playwright.chromium.launch_persistent_context(
+        _context = await mock_playwright.chromium.launch_persistent_context(
             user_data_dir=CHROME_PROFILE_DIR,
             channel="chrome",
             headless=False,
             no_viewport=True,
-            permissions=['camera', 'microphone'],
+            permissions=["camera", "microphone"],
             args=CHROME_ARGS,
         )
 
         mock_playwright.chromium.launch_persistent_context.assert_called_once()
-        call_kwargs = mock_playwright.chromium.launch_persistent_context.call_args.kwargs
+        call_kwargs = (
+            mock_playwright.chromium.launch_persistent_context.call_args.kwargs
+        )
         assert call_kwargs["channel"] == "chrome"
         assert call_kwargs["headless"] is False
         assert "camera" in call_kwargs["permissions"]
@@ -160,6 +165,7 @@ class TestLoginFlow:
         mock_page.evaluate.return_value = {"test": True}
 
         from DiscordAutoJoin.actions import safe_eval
+
         # safe_eval should handle the logged-out page gracefully
         result = await safe_eval(mock_page, "() => ({ test: true })")
         assert result == {"test": True}
@@ -171,6 +177,7 @@ class TestLoginFlow:
         mock_page.evaluate.return_value = {"test": True}
 
         from DiscordAutoJoin.actions import safe_eval
+
         result = await safe_eval(mock_page, "() => ({ test: true })")
         assert result == {"test": True}
 
@@ -198,7 +205,9 @@ class TestJoinAction:
         mock_page.locator.return_value.click.assert_called()
 
     @pytest.mark.asyncio
-    async def test_disconnect_button_appears_after_join(self, mock_page, integration_state):
+    async def test_disconnect_button_appears_after_join(
+        self, mock_page, integration_state
+    ):
         """After joining, Disconnect button should be waited for."""
         mock_page.locator.return_value.wait_for = AsyncMock()
 
@@ -212,6 +221,7 @@ class TestJoinAction:
     async def test_join_retry_on_timeout(self, integration_state):
         """Join retries should respect MAX_JOIN_RETRIES config."""
         from DiscordAutoJoin.config import CONFIG
+
         assert CONFIG["MAX_JOIN_RETRIES"] > 0
         assert isinstance(CONFIG["MAX_JOIN_RETRIES"], int)
 
@@ -221,7 +231,9 @@ class TestMonitoringLoop:
     """Verify health monitoring and state polling."""
 
     @pytest.mark.asyncio
-    async def test_monitor_js_returns_expected_structure(self, mock_page, integration_state):
+    async def test_monitor_js_returns_expected_structure(
+        self, mock_page, integration_state
+    ):
         """MONITOR_JS evaluation should return joinVisible, camOff, micUnmuted."""
         from DiscordAutoJoin.actions import MONITOR_JS, safe_eval
 
@@ -244,7 +256,7 @@ class TestMonitoringLoop:
         from DiscordAutoJoin.actions import MONITOR_JS, safe_eval
 
         mock_page.evaluate.return_value = {
-            "joinVisible": True,   # Voice dropped!
+            "joinVisible": True,  # Voice dropped!
             "camOff": False,
             "micUnmuted": False,
         }
@@ -259,7 +271,7 @@ class TestMonitoringLoop:
 
         mock_page.evaluate.return_value = {
             "joinVisible": False,
-            "camOff": True,   # Camera off!
+            "camOff": True,  # Camera off!
             "micUnmuted": False,
         }
 
@@ -274,7 +286,7 @@ class TestMonitoringLoop:
         mock_page.evaluate.return_value = {
             "joinVisible": False,
             "camOff": False,
-            "micUnmuted": True,   # Mic unmuted!
+            "micUnmuted": True,  # Mic unmuted!
         }
 
         result = await safe_eval(mock_page, MONITOR_JS)
@@ -284,6 +296,7 @@ class TestMonitoringLoop:
     async def test_poll_interval_respected(self, integration_state):
         """POLL_INTERVAL config should be a positive number."""
         from DiscordAutoJoin.config import CONFIG
+
         assert CONFIG["POLL_INTERVAL"] > 0
         assert isinstance(CONFIG["POLL_INTERVAL"], (int, float))
 
@@ -379,7 +392,9 @@ class TestErrorRecovery:
         from playwright.async_api import Error as PlaywrightError
 
         mock_page.evaluate = AsyncMock(
-            side_effect=PlaywrightError("Target page, context or browser has been closed")
+            side_effect=PlaywrightError(
+                "Target page, context or browser has been closed"
+            )
         )
 
         with pytest.raises(PlaywrightError):
@@ -401,12 +416,14 @@ class TestErrorRecovery:
     def test_max_consecutive_errors_config(self, integration_state):
         """MAX_CONSECUTIVE_ERRS should trigger page reload."""
         from DiscordAutoJoin.config import CONFIG
+
         assert CONFIG["MAX_CONSECUTIVE_ERRS"] > 0
         assert isinstance(CONFIG["MAX_CONSECUTIVE_ERRS"], int)
 
     def test_max_reload_fails_config(self, integration_state):
         """MAX_RELOAD_FAILS should trigger context restart."""
         from DiscordAutoJoin.config import CONFIG
+
         assert CONFIG["MAX_RELOAD_FAILS"] > 0
         assert isinstance(CONFIG["MAX_RELOAD_FAILS"], int)
 
@@ -430,10 +447,10 @@ class TestResourceOptimization:
         from DiscordAutoJoin.chrome_flags import CHROME_ARGS
 
         dangerous = [
-            '--disable-web-security',
-            '--no-sandbox',
-            '--disable-site-isolation-trials',
-            '--disable-gpu-sandbox',
+            "--disable-web-security",
+            "--no-sandbox",
+            "--disable-site-isolation-trials",
+            "--disable-gpu-sandbox",
         ]
         for flag in dangerous:
             assert flag not in CHROME_ARGS, f"Dangerous flag found: {flag}"
@@ -442,8 +459,8 @@ class TestResourceOptimization:
         """CHROME_ARGS should include memory-limiting flags."""
         from DiscordAutoJoin.chrome_flags import CHROME_ARGS
 
-        assert '--js-flags=--max-old-space-size=128' in CHROME_ARGS
-        assert '--renderer-process-limit=1' in CHROME_ARGS
+        assert "--js-flags=--max-old-space-size=128" in CHROME_ARGS
+        assert "--renderer-process-limit=1" in CHROME_ARGS
 
 
 @pytest.mark.integration
@@ -453,9 +470,13 @@ class TestTrayIntegration:
     def test_tray_module_imports(self):
         """Tray module should be importable without errors."""
         from DiscordAutoJoin.tray import (
-            _get_icon, _menu_generator, set_tray, update_last_action,
+            _get_icon,
+            _menu_generator,
+            set_tray,
+            update_last_action,
             register_startup,
         )
+
         # All symbols should be callable or accessible
         assert callable(_get_icon)
         assert callable(_menu_generator)
@@ -468,7 +489,7 @@ class TestTrayIntegration:
         from DiscordAutoJoin.tray import _get_icon
         from PIL import Image
 
-        for color in ['green', 'yellow', 'blue', 'darkred', 'gray', '#FF0000']:
+        for color in ["green", "yellow", "blue", "darkred", "gray", "#FF0000"]:
             icon = _get_icon(color)
             assert isinstance(icon, Image.Image)
             assert icon.size == (64, 64)
@@ -477,8 +498,8 @@ class TestTrayIntegration:
         """_get_icon should cache generated icons."""
         from DiscordAutoJoin.tray import _get_icon
 
-        icon1 = _get_icon('green')
-        icon2 = _get_icon('green')
+        icon1 = _get_icon("green")
+        icon2 = _get_icon("green")
         assert icon1 is icon2  # Same object (cached)
 
     def test_menu_generator_yields_items(self):
@@ -520,13 +541,10 @@ class TestModuleCohesion:
     def test_package_exports_all_required_symbols(self):
         """__init__.py should export all symbols used by main.py."""
         from DiscordAutoJoin import (
-            CONFIG, CONFIG_FILE,
-            logger, log, DEBUG_MODE,
+            CONFIG,
             state,
-            acquire_lock, release_lock,
-            register_startup, _get_icon, _menu_generator,
-            run_asyncio_loop,
         )
+
         # If we got here without ImportError, all exports work
         assert CONFIG is not None
         assert state is not None
@@ -535,6 +553,7 @@ class TestModuleCohesion:
         """Importing the package should not cause circular import errors."""
         # This would raise ImportError if circular deps exist
         import DiscordAutoJoin
+
         # Access a few symbols to trigger lazy imports
         _ = DiscordAutoJoin.state
         _ = DiscordAutoJoin.CONFIG

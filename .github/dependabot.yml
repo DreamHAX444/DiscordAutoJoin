@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Dhaka"
+    labels:
+      - "dependencies"
+      - "pip"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    open-pull-requests-limit: 5
+    target-branch: "main"
+    versioning-strategy: increase-if-necessary
+    allow:
+      - dependency-type: "direct"
+    ignore:
+      - dependency-name: "playwright"
+        update-types: ["version-update:semver-major"]

@@ -5,7 +5,7 @@ and CLICK_MIC_JS JavaScript snippets, and error handling paths.
 
 import asyncio
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 from DiscordAutoJoin.actions import MONITOR_JS, CLICK_MIC_JS, safe_eval
 
@@ -32,21 +32,21 @@ class TestMonitorJS:
 
     def test_checks_aria_label_for_camera(self):
         """Should check aria-label for Turn On Camera."""
-        assert 'Turn On Camera' in MONITOR_JS
+        assert "Turn On Camera" in MONITOR_JS
 
     def test_checks_aria_label_for_mic(self):
         """Should check aria-label for microphone mute/unmute."""
-        assert 'aria-label' in MONITOR_JS
-        assert 'ute' in MONITOR_JS  # Mute
-        assert 'icrophone' in MONITOR_JS  # Microphone
+        assert "aria-label" in MONITOR_JS
+        assert "ute" in MONITOR_JS  # Mute
+        assert "icrophone" in MONITOR_JS  # Microphone
 
     def test_handles_missing_mic_button(self):
         """Should handle case where mic button is not found."""
-        assert 'if (micBtn)' in MONITOR_JS
+        assert "if (micBtn)" in MONITOR_JS
 
     def test_handles_aria_checked_attribute(self):
         """Should check aria-checked attribute for toggle state."""
-        assert 'aria-checked' in MONITOR_JS
+        assert "aria-checked" in MONITOR_JS
 
 
 class TestClickMicJS:
@@ -59,16 +59,16 @@ class TestClickMicJS:
 
     def test_finds_mic_button(self):
         """Should query for microphone button."""
-        assert 'querySelector' in CLICK_MIC_JS
-        assert 'icrophone' in CLICK_MIC_JS
+        assert "querySelector" in CLICK_MIC_JS
+        assert "icrophone" in CLICK_MIC_JS
 
     def test_clicks_if_found(self):
         """Should call click() if button is found."""
-        assert 'click()' in CLICK_MIC_JS
+        assert "click()" in CLICK_MIC_JS
 
     def test_guards_against_missing_button(self):
         """Should check if micBtn exists before clicking."""
-        assert 'if (micBtn)' in CLICK_MIC_JS
+        assert "if (micBtn)" in CLICK_MIC_JS
 
 
 class TestSafeEval:
@@ -109,7 +109,9 @@ class TestSafeEval:
 
         mock_page = AsyncMock()
         mock_page.evaluate = AsyncMock(
-            side_effect=PlaywrightError("Target page, context or browser has been closed")
+            side_effect=PlaywrightError(
+                "Target page, context or browser has been closed"
+            )
         )
 
         with pytest.raises(PlaywrightError):

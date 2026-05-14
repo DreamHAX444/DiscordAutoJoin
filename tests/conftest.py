@@ -9,13 +9,14 @@ Provides:
 
 import os
 import sys
-import json
 import tempfile
 import shutil
 import pytest
 
 # Ensure the package is importable from the tests directory
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
+)
 
 
 @pytest.fixture
@@ -60,6 +61,7 @@ def clean_config(temp_appdata):
     Returns the path to the config file.
     """
     import DiscordAutoJoin.config as cfg
+
     if os.path.exists(cfg.CONFIG_FILE):
         os.remove(cfg.CONFIG_FILE)
     # Force reload
@@ -86,6 +88,7 @@ def sample_config_dict():
 def reset_state():
     """Reset the global AppState singleton to defaults after each test."""
     from DiscordAutoJoin.state import state
+
     # Save events (they can't be reset easily)
     first_run = state.first_run_done
     should_exit = state.should_exit
@@ -111,6 +114,7 @@ def mock_lock_file(temp_appdata):
     cleans up after. Uses the temp_appdata path.
     """
     import DiscordAutoJoin.config as cfg
+
     lock_path = cfg.LOCK_FILE
     # Ensure no existing lock
     if os.path.exists(lock_path):

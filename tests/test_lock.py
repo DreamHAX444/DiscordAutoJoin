@@ -7,11 +7,9 @@ release_lock() public API.
 """
 
 import os
-import sys
 import pytest
 
 import DiscordAutoJoin.lock as lock_mod
-import DiscordAutoJoin.config as cfg
 
 
 class TestPidExists:
@@ -44,14 +42,14 @@ class TestAcquireLock:
         assert not os.path.exists(mock_lock_file)
         lock_mod.acquire_lock()
         assert os.path.exists(mock_lock_file)
-        with open(mock_lock_file, 'r', encoding='utf-8') as f:
+        with open(mock_lock_file, "r", encoding="utf-8") as f:
             pid = int(f.read().strip())
         assert pid == os.getpid()
 
     def test_lock_file_contains_valid_pid(self, temp_appdata, mock_lock_file):
         """Lock file should contain a valid integer PID."""
         lock_mod.acquire_lock()
-        with open(mock_lock_file, 'r', encoding='utf-8') as f:
+        with open(mock_lock_file, "r", encoding="utf-8") as f:
             content = f.read().strip()
         pid = int(content)
         assert pid > 0
@@ -60,7 +58,7 @@ class TestAcquireLock:
     def test_second_instance_detected(self, temp_appdata, mock_lock_file):
         """acquire_lock() should exit when another instance's lock exists."""
         # Create a lock file with our own PID (simulating another instance)
-        with open(mock_lock_file, 'w', encoding='utf-8') as f:
+        with open(mock_lock_file, "w", encoding="utf-8") as f:
             f.write(str(os.getpid()))
         # Calling acquire_lock should trigger sys.exit
         with pytest.raises(SystemExit) as exc_info:
@@ -70,30 +68,30 @@ class TestAcquireLock:
     def test_stale_lock_overwritten(self, temp_appdata, mock_lock_file):
         """A lock file with a non-existent PID should be overwritten."""
         # Write a PID that definitely doesn't exist
-        with open(mock_lock_file, 'w', encoding='utf-8') as f:
+        with open(mock_lock_file, "w", encoding="utf-8") as f:
             f.write("99999999")
         # Should not raise — stale lock is overwritten
         lock_mod.acquire_lock()
         assert os.path.exists(mock_lock_file)
-        with open(mock_lock_file, 'r', encoding='utf-8') as f:
+        with open(mock_lock_file, "r", encoding="utf-8") as f:
             pid = int(f.read().strip())
         assert pid == os.getpid()
 
     def test_corrupt_lock_file_overwritten(self, temp_appdata, mock_lock_file):
         """A lock file with non-integer content should be overwritten."""
-        with open(mock_lock_file, 'w', encoding='utf-8') as f:
+        with open(mock_lock_file, "w", encoding="utf-8") as f:
             f.write("not-a-pid")
         lock_mod.acquire_lock()
-        with open(mock_lock_file, 'r', encoding='utf-8') as f:
+        with open(mock_lock_file, "r", encoding="utf-8") as f:
             pid = int(f.read().strip())
         assert pid == os.getpid()
 
     def test_empty_lock_file_overwritten(self, temp_appdata, mock_lock_file):
         """An empty lock file should be overwritten."""
-        with open(mock_lock_file, 'w', encoding='utf-8') as f:
+        with open(mock_lock_file, "w", encoding="utf-8") as f:
             f.write("")
         lock_mod.acquire_lock()
-        with open(mock_lock_file, 'r', encoding='utf-8') as f:
+        with open(mock_lock_file, "r", encoding="utf-8") as f:
             pid = int(f.read().strip())
         assert pid == os.getpid()
 
@@ -128,6 +126,6 @@ class TestLockFileEncoding:
     def test_lock_file_utf8(self, temp_appdata, mock_lock_file):
         """Lock file should be written with UTF-8 encoding."""
         lock_mod.acquire_lock()
-        with open(mock_lock_file, 'r', encoding='utf-8') as f:
+        with open(mock_lock_file, "r", encoding="utf-8") as f:
             content = f.read()
         assert content.strip().isdigit()

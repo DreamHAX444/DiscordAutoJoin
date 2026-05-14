@@ -10,12 +10,15 @@ Provides:
 - register_startup() for Windows startup registration
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import ctypes
 import time
 import winreg
 from datetime import datetime, timedelta
+from typing import Any, Generator
 from PIL import Image, ImageDraw
 import pystray
 
@@ -25,13 +28,13 @@ from .logging_setup import log
 from .browser import find_chrome_hwnd
 
 # Module-level icon reference — set by main.py after pystray.Icon is created
-icon = None
+icon: Any = None  # pystray.Icon (untyped library)
 
 # ── Icon Generation ───────────────────────────────────────────────────────────
-_icon_cache = {}
+_icon_cache: dict[str, Image.Image] = {}
 
 
-def _get_icon(color):
+def _get_icon(color: str) -> Image.Image:
     """Generate or retrieve a cached 64x64 tray icon (colored circle on black).
 
     Args:
@@ -41,7 +44,7 @@ def _get_icon(color):
         PIL.Image: The generated/cached icon image.
     """
     if color not in _icon_cache:
-        img = Image.new('RGB', (64, 64), (0, 0, 0))
+        img = Image.new("RGB", (64, 64), (0, 0, 0))
         ImageDraw.Draw(img).ellipse((8, 8, 56, 56), fill=color)
         _icon_cache[color] = img
     return _icon_cache[color]
@@ -49,7 +52,10 @@ def _get_icon(color):
 
 # ── Tray Update Helpers ───────────────────────────────────────────────────────
 
-def update_last_action(action, category="STATE", silent=True):
+
+def update_last_action(
+    action: str, category: str = "STATE", silent: bool = True
+) -> None:
     """Record the most recent automation action and refresh the tray menu.
 
     Args:
@@ -64,7 +70,7 @@ def update_last_action(action, category="STATE", silent=True):
         icon.update_menu()
 
 
-def set_tray(status, color):
+def set_tray(status: str, color: str) -> None:
     """Update the system tray icon color, tooltip, and menu.
 
     Args:
@@ -83,14 +89,15 @@ def set_tray(status, color):
 
 # ── Tray Action Callbacks ─────────────────────────────────────────────────────
 
-def _on_login_done(*_):
+
+def _on_login_done(*_: Any) -> None:
     """Tray callback: user confirms manual Discord login is complete."""
     update_last_action("Manual Login Confirmed", category="USR")
     state.first_run_done.set()
     set_tray("Connecting...", "yellow")
 
 
-def _toggle_pause(*_):
+def _toggle_pause(*_: Any) -> None:
     """Tray callback: pause or resume automation."""
     state.paused = not state.paused
     action = "Paused" if state.paused else "Resumed"
@@ -98,29 +105,29 @@ def _toggle_pause(*_):
     set_tray(state.status, "green" if state.status == "Connected" else "yellow")
 
 
-def _trigger_reconnect(*_):
+def _trigger_reconnect(*_: Any) -> None:
     """Tray callback: force a full disconnect/reconnect cycle."""
     update_last_action("Force Reconnect Initiated by user", category="USR")
     state.force_reconnect = True
 
 
-def _toggle_browser(*_):
+def _toggle_browser(*_: Any) -> None:
     """Tray callback: show or hide the Chrome window via Win32 API."""
     if not state.browser_hwnd:
         find_chrome_hwnd(state)
     if not state.browser_hwnd:
         return
     if state.browser_hidden:
-        ctypes.windll.user32.ShowWindow(state.browser_hwnd, 9)   # SW_RESTORE
+        ctypes.windll.user32.ShowWindow(state.browser_hwnd, 9)  # SW_RESTORE
         state.browser_hidden = False
     else:
-        ctypes.windll.user32.ShowWindow(state.browser_hwnd, 6)   # SW_MINIMIZE
+        ctypes.windll.user32.ShowWindow(state.browser_hwnd, 6)  # SW_MINIMIZE
         state.browser_hidden = True
     if icon:
         icon.update_menu()
 
 
-def _restart_app(*_):
+def _restart_app(*_: Any) -> None:
     """Tray callback: trigger a clean app restart."""
     log.info("Restarting app via tray...", silent=True, category="USR")
     state.is_restarting = True
@@ -129,7 +136,7 @@ def _restart_app(*_):
         icon.stop()
 
 
-def _exit_app(*_):
+def _exit_app(*_: Any) -> None:
     """Tray callback: clean shutdown and exit."""
     log.info("Exiting app via tray...", silent=True, category="USR")
     state.should_exit.set()
@@ -139,28 +146,70 @@ def _exit_app(*_):
 
 # ── Menu Generator ────────────────────────────────────────────────────────────
 
-def _menu_generator():
+
+def _menu_generator() -> Generator[pystray.MenuItem, None, None]:
     """Generates the tray menu dynamically upon right-click for real-time stats."""
     uptime = str(timedelta(seconds=int(time.time() - state.start_time)))
-    time_since_action = str(timedelta(seconds=int((datetime.now() - state.action_timestamp).total_seconds())))
+    time_since_action = str(
+        timedelta(
+            seconds=int((datetime.now() - state.action_timestamp).total_seconds())
+        )
+    )
 
     # === Dashboard Display (Disabled Items acts as text/labels) ===
-    status_icon = "\u23f8\ufe0f" if state.paused else ("\U0001f7e2" if state.status == "Connected" else "\U0001f7e1")
-    yield pystray.MenuItem(f"{status_icon} Status: {state.status}", lambda: None, enabled=False)
-    yield pystray.MenuItem(f"\u23f1\ufe0f Uptime: {uptime}", lambda: None, enabled=False)
-    yield pystray.MenuItem(f"\u26a1 Last: {state.last_action} ({time_since_action} ago)", lambda: None, enabled=False)
-    yield pystray.MenuItem(f"\U0001f504 Restarts: {state.restart_count}", lambda: None, enabled=False)
+    status_icon = (
+        "\u23f8\ufe0f"
+        if state.paused
+        else ("\U0001f7e2" if state.status == "Connected" else "\U0001f7e1")
+    )
+    yield pystray.MenuItem(
+        f"{status_icon} Status: {state.status}", lambda: None, enabled=False
+    )
+    yield pystray.MenuItem(
+        f"\u23f1\ufe0f Uptime: {uptime}", lambda: None, enabled=False
+    )
+    yield pystray.MenuItem(
+        f"\u26a1 Last: {state.last_action} ({time_since_action} ago)",
+        lambda: None,
+        enabled=False,
+    )
+    yield pystray.MenuItem(
+        f"\U0001f504 Restarts: {state.restart_count}", lambda: None, enabled=False
+    )
 
     yield pystray.Menu.SEPARATOR
 
     # === Configuration Submenu ===
-    yield pystray.MenuItem("\u2699\ufe0f View Config", pystray.Menu(
-        pystray.MenuItem(f"Target URL: ...{CONFIG['DISCORD_URL'][-20:]}", lambda: None, enabled=False),
-        pystray.MenuItem(f"Poll Interval: {CONFIG['POLL_INTERVAL']}s", lambda: None, enabled=False),
-        pystray.MenuItem(f"Max Join Retries: {CONFIG['MAX_JOIN_RETRIES']}", lambda: None, enabled=False),
-        pystray.MenuItem(f"Max Launch Retries: {CONFIG.get('MAX_LAUNCH_RETRIES', 5)}", lambda: None, enabled=False),
-        pystray.MenuItem(f"Health Log Freq: {CONFIG['HEALTH_LOG_EVERY']} polls", lambda: None, enabled=False)
-    ))
+    yield pystray.MenuItem(
+        "\u2699\ufe0f View Config",
+        pystray.Menu(
+            pystray.MenuItem(
+                f"Target URL: ...{CONFIG['DISCORD_URL'][-20:]}",
+                lambda: None,
+                enabled=False,
+            ),
+            pystray.MenuItem(
+                f"Poll Interval: {CONFIG['POLL_INTERVAL']}s",
+                lambda: None,
+                enabled=False,
+            ),
+            pystray.MenuItem(
+                f"Max Join Retries: {CONFIG['MAX_JOIN_RETRIES']}",
+                lambda: None,
+                enabled=False,
+            ),
+            pystray.MenuItem(
+                f"Max Launch Retries: {CONFIG.get('MAX_LAUNCH_RETRIES', 5)}",
+                lambda: None,
+                enabled=False,
+            ),
+            pystray.MenuItem(
+                f"Health Log Freq: {CONFIG['HEALTH_LOG_EVERY']} polls",
+                lambda: None,
+                enabled=False,
+            ),
+        ),
+    )
 
     yield pystray.Menu.SEPARATOR
 
@@ -169,34 +218,51 @@ def _menu_generator():
         yield pystray.MenuItem("\u2705 Confirm Login Done", _on_login_done)
         yield pystray.Menu.SEPARATOR
 
-    pause_text = "\u25b6\ufe0f Resume Automation" if state.paused else "\u23f8\ufe0f Pause Automation"
+    pause_text = (
+        "\u25b6\ufe0f Resume Automation"
+        if state.paused
+        else "\u23f8\ufe0f Pause Automation"
+    )
     yield pystray.MenuItem(pause_text, _toggle_pause)
     yield pystray.MenuItem("\U0001f50c Force Reconnect", _trigger_reconnect)
 
-    visibility_text = "\U0001f441\ufe0f Show Chrome" if state.browser_hidden else "\U0001f648 Hide Chrome"
+    visibility_text = (
+        "\U0001f441\ufe0f Show Chrome"
+        if state.browser_hidden
+        else "\U0001f648 Hide Chrome"
+    )
     yield pystray.MenuItem(visibility_text, _toggle_browser)
 
     yield pystray.Menu.SEPARATOR
-    yield pystray.MenuItem("\U0001f4dc View Debug Log", lambda *_: os.startfile(LOG_FILE))
+    yield pystray.MenuItem(
+        "\U0001f4dc View Debug Log",
+        lambda *_: os.startfile(LOG_FILE),  # nosec B606
+    )
     yield pystray.MenuItem("\U0001f501 Restart App", _restart_app)
     yield pystray.MenuItem("\u274c Exit", _exit_app)
 
 
 # ── Startup Registration ──────────────────────────────────────────────────────
 
-def register_startup():
+
+def register_startup() -> None:
     """Register the app in Windows startup via HKCU Run registry key.
 
     On failure (e.g., permission denied), logs a warning but does not
     prevent the app from running.
     """
     script = os.path.abspath(sys.argv[0])
-    cmd = f'"{sys.executable}"' if getattr(sys, 'frozen', False) else f'"{sys.executable}" "{script}"'
+    cmd = (
+        f'"{sys.executable}"'
+        if getattr(sys, "frozen", False)
+        else f'"{sys.executable}" "{script}"'
+    )
     try:
         key = winreg.OpenKey(
             winreg.HKEY_CURRENT_USER,
             r"Software\Microsoft\Windows\CurrentVersion\Run",
-            0, winreg.KEY_SET_VALUE | winreg.KEY_READ
+            0,
+            winreg.KEY_SET_VALUE | winreg.KEY_READ,
         )
         winreg.SetValueEx(key, "DiscordAutoJoin", 0, winreg.REG_SZ, cmd)
         winreg.CloseKey(key)
